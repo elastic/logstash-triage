@@ -1,0 +1,48 @@
+<html>
+<script   src="https://code.jquery.com/jquery-2.2.3.min.js"   integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="   crossorigin="anonymous"></script>
+<script>
+var labels = ['P1', 'P2', 'P3', 'blocker'];
+
+function search(qstr) {
+  return $.ajax({
+    headers: {Accept: 'application/vnd.github.v3+json'},
+    url: 'https://api.github.com/search/issues?q=' + qstr
+  })
+}
+
+$(document).ready(function () {
+    var issues = $('#issues');
+    $.each(labels, function(i,label) {
+      var labelDivs = {};
+      var ld = $("<div id='label-" + label + "'><h3>" + label + "</h3><table></table></div>");
+      labelDivs[label] = ld;
+      issues.append(ld);
+
+      search("org:logstash-plugins state:open label:" + label).
+        success(function(response) {
+          var labelDiv = labelDivs[label];
+          var table = $("<table></table>");
+          labelDiv.append(table);
+          $.each(response.items, function (i,item) {
+            var tr = $("<tr></tr>")
+            tr.append("<td>" + (item.assignee ? "<strong>@" + item.assignee.login + "</strong>" : '<em>unassigned</em>') + "</td>");
+            tr.append("<a href='" + item.html_url + "'>" +
+                        item.html_url.replace("https://github.com/logstash-plugins/logstash-", "") +
+                      "</a>");
+            tr.append("<td>" + item.title + "</td>");
+            table.append(tr);
+          });
+
+          labelDiv.append("<a href='https://github.com/search?q=org:logstash-plugins+label:" + label + "+state:open'>Full Search for " + label +  "</a>")
+        });
+    });
+});
+
+
+</script>
+<body>
+<h1>Logstash Triage</h1>
+<div id="issues">
+</div>
+</body>
+</html>
